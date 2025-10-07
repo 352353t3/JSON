@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Cargar Archivo JSON Simple</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            margin: 20px auto;
+            width: 80%;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #eee;
+            position: sticky;
+            top: 0;
+        }
+
+        #contenido {
+            white-space: pre-wrap;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 80%;
+            margin: 10px auto;
+            min-height: 100px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Cargar un archivo JSON</h1>
+    <input type="file" id="archivo" accept=".json">
+    <button id="mostrar" type="button" disabled>Ver contenido</button>
+
+    <h2>Contenido:</h2>
+    <pre id="contenido">Aún no hay nada.</pre>
+
+    <table id="table" align="center"></table>
+
+    <script>
+        const input = document.getElementById('archivo');
+        const contenido = document.getElementById('contenido');
+        const tabla = document.getElementById('table');
+        const botonVer = document.getElementById('mostrar');
+
+        input.addEventListener('change', () => {
+            botonVer.disabled = !input.files.length;
+            contenido.textContent = 'Aún no hay nada.';
+            tabla.innerHTML = '';
+        });
+
+        botonVer.addEventListener('click', async () => {
+            const file = input.files[0];
+            if (!file) {
+                contenido.textContent = 'Por favor selecciona un archivo.';
+                tabla.innerHTML = '';
+                return;
+            }
+
+            contenido.textContent = 'Cargando...';
+
+            try {
+                const text = await file.text();
+                contenido.textContent = text;
+
+                const datos = JSON.parse(text);
+                mostrarTabla(datos);
+            } catch (e) {
+                contenido.textContent = 'Archivo no es un JSON válido.';
+                tabla.innerHTML = '';
+            }
+        });
+
+        function mostrarTabla(list) {
+            if (!Array.isArray(list)) {
+                tabla.innerHTML = 'El JSON debe ser un arreglo de objetos.';
+                return;
+            }
+
+            const cols = Array.from(list.reduce((acc, obj) => {
+                Object.keys(obj).forEach(k => acc.add(k));
+                return acc;
+            }, new Set()));
+
+            let html = '<thead><tr>';
+            cols.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            list.forEach(obj => {
+                html += '<tr>';
+                cols.forEach(col => {
+                    html += `<td>${obj[col] ?? ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            tabla.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
